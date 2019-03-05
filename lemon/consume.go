@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/getsentry/raven-go"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -59,7 +60,7 @@ func consume() {
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
 			FetchedTime:  time.Now().Unix(),
-			UserAgent:    "Go client"}
+			UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
 		resultBytes, err := json.Marshal(result)
 		if err != nil {
 			raven.CaptureErrorAndWait(err, nil)
