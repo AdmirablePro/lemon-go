@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // consume gets task from local queue and do the task.
@@ -16,9 +17,10 @@ func consume() {
 			resp *http.Response
 			err  error
 		)
-		if task.Method == "POST" {
+		if task.HTTPMethod == "POST" {
 			// resp, err = http.Post(task.Host + task.Path)
-		} else if task.Method == "GET" {
+			// todo: implement post
+		} else if task.HTTPMethod == "GET" {
 			resp, err = http.Get(task.Host + task.Path)
 		} else {
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")
@@ -36,13 +38,21 @@ func consume() {
 			continue
 		}
 
+		// check task status
+		var taskStatus string
+		if resp.StatusCode == 200 {
+			taskStatus = "success"
+		} else {
+			taskStatus = "error"
+		}
+
 		// make result
 		result := Result{
-			Status:       "",
+			Status:       taskStatus,
 			TaskID:       task.TaskID,
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
-			FetchedTime:  "",
+			FetchedTime:  time.Now().Unix(),
 			UserAgent:    "Go client"}
 		resultBytes, err := json.Marshal(result)
 		if err != nil {
