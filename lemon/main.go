@@ -44,6 +44,7 @@ func main() {
 
 	go fetchTask()
 	go consume()
+	go metricPrinter()
 
 	http.HandleFunc("/", raven.RecoveryHandler(IndexHandler))
 	err := http.ListenAndServe("127.0.0.1:"+strconv.Itoa(*localPort), nil)

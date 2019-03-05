@@ -28,10 +28,12 @@ func consume() {
 		} else if task.HTTPMethod == "GET" {
 			resp, err = http.Get(task.Host + task.Path)
 		} else {
+			metricCount(M_TASK_FAILED)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")
 			continue
 		}
 		if err != nil {
+			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when consuming task: %s", err.Error())
 			continue
@@ -40,6 +42,7 @@ func consume() {
 		// read body
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when reading body: %s", err.Error())
 			continue
@@ -63,6 +66,7 @@ func consume() {
 			UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
 		resultBytes, err := json.Marshal(result)
 		if err != nil {
+			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when marshaling result: %s", err.Error())
 			continue
@@ -71,9 +75,11 @@ func consume() {
 		// post result to server
 		resp, err = http.Post("", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
 		if err != nil {
+			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when posting result to server: %s", err.Error())
 			continue
 		}
+		metricCount(M_TASK_SUCCESS)
 	}
 }

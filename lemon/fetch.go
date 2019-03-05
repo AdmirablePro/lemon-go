@@ -13,9 +13,9 @@ func fetchTask() {
 		time.Sleep(time.Second) // sleep 1s
 		if taskQueue.Size() < 10 {
 			// get task
-			logger.Info("Fetching task...")
 			resp, err := http.Get(*serverAddress + "/task")
 			if err != nil {
+				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Error when fetching task: %s", err.Error())
 				continue
@@ -25,6 +25,7 @@ func fetchTask() {
 			var tasks []Task
 			err = json.NewDecoder(resp.Body).Decode(&tasks)
 			if err != nil {
+				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Decode error when fetching task: %s", err.Error())
 				continue
@@ -33,6 +34,7 @@ func fetchTask() {
 			// save to queue
 			for _, item := range tasks {
 				taskQueue.Append(item)
+				metricCount(M_TASK_RECEIVED)
 			}
 		}
 	}
