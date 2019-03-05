@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/getsentry/raven-go"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -27,6 +28,7 @@ func consume() {
 			continue
 		}
 		if err != nil {
+			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when consuming task: %s", err.Error())
 			continue
 		}
@@ -34,6 +36,7 @@ func consume() {
 		// read body
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when reading body: %s", err.Error())
 			continue
 		}
@@ -56,6 +59,7 @@ func consume() {
 			UserAgent:    "Go client"}
 		resultBytes, err := json.Marshal(result)
 		if err != nil {
+			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when marshaling result: %s", err.Error())
 			continue
 		}
@@ -63,6 +67,7 @@ func consume() {
 		// post result to server
 		resp, err = http.Post("", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
 		if err != nil {
+			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when posting result to server: %s", err.Error())
 			continue
 		}

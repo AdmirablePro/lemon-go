@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/getsentry/raven-go"
 	"net/http"
 	"time"
 )
@@ -14,6 +15,7 @@ func fetchTask() {
 			logger.Info("Fetching task...")
 			resp, err := http.Get(*serverAddress + "/task")
 			if err != nil {
+				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Error when fetching task: %s", err.Error())
 			}
 
@@ -21,6 +23,7 @@ func fetchTask() {
 			var tasks []Task
 			err = json.NewDecoder(resp.Body).Decode(&tasks)
 			if err != nil {
+				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Decode error when fetching task: %s", err.Error())
 			}
 
