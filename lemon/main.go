@@ -14,6 +14,7 @@ var (
 	taskQueue     = TaskQueue{}
 	serverAddress *string
 	ravenDSN      string
+	gitRevision   string
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +40,7 @@ func main() {
 	serverAddress = flag.String("server", "https://lemon.everyclass.xyz", "Address of server")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 
-	logger.WithFields(logrus.Fields{"server": *serverAddress}).Info("Starting lemon")
+	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof("Starting lemon (Go %s)", gitRevision)
 
 	go fetchTask()
 	go consume()
