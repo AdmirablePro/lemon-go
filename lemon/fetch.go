@@ -10,6 +10,7 @@ import (
 // fetchTask fetches a task list from server if local size is smaller than 10 then append to local task queue.
 func fetchTask() {
 	for {
+		time.Sleep(time.Second) // sleep 1s
 		if taskQueue.Size() < 10 {
 			// get task
 			logger.Info("Fetching task...")
@@ -17,6 +18,7 @@ func fetchTask() {
 			if err != nil {
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Error when fetching task: %s", err.Error())
+				continue
 			}
 
 			// decode list
@@ -25,6 +27,7 @@ func fetchTask() {
 			if err != nil {
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Decode error when fetching task: %s", err.Error())
+				continue
 			}
 
 			// save to queue
@@ -32,7 +35,5 @@ func fetchTask() {
 				taskQueue.Append(item)
 			}
 		}
-
-		time.Sleep(time.Second) // sleep 1s
 	}
 }

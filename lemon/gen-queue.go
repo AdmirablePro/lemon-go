@@ -27,6 +27,9 @@ func (q *TaskQueue) Append(t Task) {
 // 出队列
 func (q *TaskQueue) Pop() *Task {
 	q.lock.Lock()
+	if q.IsEmpty() {
+		return nil
+	}
 	item := q.items[0]
 	q.items = q.items[1:len(q.items)]
 	q.lock.Unlock()

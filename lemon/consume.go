@@ -14,6 +14,9 @@ import (
 func consume() {
 	for {
 		task := taskQueue.Pop()
+		if task == nil {
+			continue
+		}
 		var (
 			resp *http.Response
 			err  error

@@ -26,16 +26,17 @@ func init() {
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	customFormatter.FullTimestamp = true
 	logger.SetFormatter(customFormatter)
+	// logger.SetReportCaller(true)
 
 	// raven
 	err := raven.SetDSN(ravenDSN)
 	if err != nil {
-		logger.Warn("Set DSN failed.")
+		logger.Warnf("Set DSN failed: %s", err.Error())
 	}
 }
 
 func main() {
-	serverAddress = flag.String("server", "https://lemon.everyclass.xyz", "Address of lemon tree")
+	serverAddress = flag.String("server", "https://lemon.everyclass.xyz", "Address of server")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 
 	logger.WithFields(logrus.Fields{"server": *serverAddress}).Info("Starting lemon")
