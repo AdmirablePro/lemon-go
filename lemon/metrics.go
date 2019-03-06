@@ -19,8 +19,8 @@ var (
 	metricsMutex = sync.RWMutex{}
 )
 
-// metricPrinter prints metrics every 30 seconds and clear counts.
-func metricPrinter() {
+// metricsFlusher prints metrics every 30 seconds and clear counts.
+func metricsFlusher() {
 	interval := 30
 	time.Sleep(time.Second * time.Duration(interval))
 	for {

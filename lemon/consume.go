@@ -27,6 +27,9 @@ func consume() {
 			// todo: implement post
 		} else if task.HTTPMethod == "GET" {
 			resp, err = http.Get(task.Host + task.Path)
+			// todo: add header, cookie, etc.
+			// todo: 指数等待
+			// todo: 怎么定义成功失败？
 		} else {
 			metricCount(M_TASK_FAILED)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")

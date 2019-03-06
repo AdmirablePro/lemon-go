@@ -13,8 +13,11 @@ var (
 	logger        = logrus.New()
 	taskQueue     = TaskQueue{}
 	serverAddress *string
+
+	// below are build-time variables
 	ravenDSN      string
 	gitRevision   string
+	enableMetrics string
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,11 +43,13 @@ func main() {
 	serverAddress = flag.String("server", "https://lemon.everyclass.xyz", "Address of server")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 
-	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof("Starting lemon (Go %s)", gitRevision)
+	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof(" Lemon (Go %s) 正在启动...", gitRevision)
 
 	go fetchTask()
 	go consume()
-	go metricPrinter()
+	if enableMetrics == "true" {
+		go metricsFlusher()
+	}
 
 	http.HandleFunc("/", raven.RecoveryHandler(IndexHandler))
 	err := http.ListenAndServe("127.0.0.1:"+strconv.Itoa(*localPort), nil)
