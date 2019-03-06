@@ -14,8 +14,12 @@ import (
 // consume gets task from local queue and do the task.
 func consume() {
 	client := &http.Client{}
+	sleepSeconds := 1
 
 	for {
+		// sleep
+		time.Sleep(time.Second * time.Duration(sleepSeconds))
+
 		task := taskQueue.Pop()
 		if task == nil {
 			// if currently no tasks, sleep for 1 second.
@@ -35,9 +39,7 @@ func consume() {
 			continue
 		}
 
-		// todo: 指数等待
-		// todo: 怎么定义成功失败？
-		request, err = http.NewRequest(task.HTTPMethod, task.Host+task.Path, nil)
+		request, err = http.NewRequest(task.HTTPMethod, task.Host+task.Path, bytes.NewBuffer([]byte(task.Payload)))
 		if err != nil {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
@@ -61,6 +63,7 @@ func consume() {
 		// do request
 		resp, err = client.Do(request)
 		if err != nil {
+			sleepSeconds *= 2 // add time of sleep when request fails
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when consuming task: %s", err.Error())
@@ -78,6 +81,7 @@ func consume() {
 		}
 
 		// check task status
+		// todo: 怎么定义成功失败？
 		var taskStatus string
 		if resp.StatusCode == 200 {
 			taskStatus = "success"
@@ -110,5 +114,10 @@ func consume() {
 			continue
 		}
 		metricCount(M_TASK_SUCCESS)
+
+		// reduce time of sleep after success
+		if sleepSeconds > 1 {
+			sleepSeconds /= 2
+		}
 	}
 }

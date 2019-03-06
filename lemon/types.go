@@ -8,7 +8,7 @@ type Task struct {
 	Header     map[string]string `json:"header"`
 	Param      map[string]string `json:"param"`
 	Cookie     string            `json:"cookie"`
-	Body       string            `json:"body"` // not implemented
+	Payload    string            `json:"payload"`
 }
 
 type Result struct {
