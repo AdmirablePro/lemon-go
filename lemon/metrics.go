@@ -30,7 +30,7 @@ func metricsFlusher() {
 			logger.Error("JSON marshal error when converting metrics")
 		}
 
-		logger.Info(fmt.Sprintf("Metrics in last %ds: ", interval), string(metricsJson))
+		logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, interval), string(metricsJson))
 		metricsMutex.Lock()
 		for key := range metrics {
 			metrics[key] = 0
