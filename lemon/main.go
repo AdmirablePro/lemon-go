@@ -19,6 +19,7 @@ var (
 	gitRevision        string
 	enableMetrics      string
 	enableGlobalReport string
+	defaultServer      string
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,6 @@ func init() {
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	customFormatter.FullTimestamp = true
 	logger.SetFormatter(customFormatter)
-	// logger.SetReportCaller(true)
 
 	// raven
 	err := raven.SetDSN(ravenDSN)
@@ -41,7 +41,7 @@ func init() {
 }
 
 func main() {
-	serverAddress = flag.String("server", "https://lemon.everyclass.xyz", "Address of server")
+	serverAddress = flag.String("server", defaultServer, "Address of server")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 
 	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof(" Lemon (Go %s) 正在启动...", gitRevision)
