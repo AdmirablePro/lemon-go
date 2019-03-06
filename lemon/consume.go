@@ -11,13 +11,50 @@ import (
 	"time"
 )
 
+const (
+	taskStatusError   = "error"
+	taskStatusSuccess = "success"
+)
+
+// make a `Result` for error and report to server
+func reportErrorResult(taskID string) {
+	result := Result{
+		Status:       taskStatusError,
+		TaskID:       taskID,
+		ResponseCode: 0,
+		Data:         "",
+		FetchedTime:  time.Now().Unix(),
+		UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
+
+	report(&result)
+}
+
+// post a `Result` to lemon server
+func report(result *Result) {
+	// marshal
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		metricCount(M_TASK_FAILED)
+		raven.CaptureErrorAndWait(err, nil)
+		logger.Warnf("Error when marshaling result: %s", err.Error())
+	}
+
+	// post result to server
+	_, err = http.Post("", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
+	if err != nil {
+		metricCount(M_TASK_FAILED)
+		raven.CaptureErrorAndWait(err, nil)
+		logger.Warnf("Error when posting result to server: %s", err.Error())
+	}
+}
+
 // consume gets task from local queue and do the task.
 func consume() {
 	client := &http.Client{}
 	sleepSeconds := 1
 
 	for {
-		// sleep
+		// sleep between each requests
 		time.Sleep(time.Second * time.Duration(sleepSeconds))
 
 		task := taskQueue.Pop()
@@ -36,6 +73,7 @@ func consume() {
 		if task.HTTPMethod != "POST" && task.HTTPMethod != "GET" {
 			metricCount(M_TASK_FAILED)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")
+			reportErrorResult(task.TaskID)
 			continue
 		}
 
@@ -44,6 +82,7 @@ func consume() {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when building request: %s", err.Error())
+			reportErrorResult(task.TaskID)
 			continue
 		}
 
@@ -67,6 +106,7 @@ func consume() {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when consuming task: %s", err.Error())
+			reportErrorResult(task.TaskID)
 			continue
 		}
 
@@ -77,42 +117,19 @@ func consume() {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when reading response body: %s", err.Error())
+			reportErrorResult(task.TaskID)
 			continue
-		}
-
-		// check task status
-		// todo: 怎么定义成功失败？
-		var taskStatus string
-		if resp.StatusCode == 200 {
-			taskStatus = "success"
-		} else {
-			taskStatus = "error"
 		}
 
 		// make result
 		result := Result{
-			Status:       taskStatus,
+			Status:       taskStatusSuccess,
 			TaskID:       task.TaskID,
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
 			FetchedTime:  time.Now().Unix(),
 			UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
-		resultBytes, err := json.Marshal(result)
-		if err != nil {
-			metricCount(M_TASK_FAILED)
-			raven.CaptureErrorAndWait(err, nil)
-			logger.Warnf("Error when marshaling result: %s", err.Error())
-			continue
-		}
-
-		// post result to server
-		resp, err = http.Post("", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
-		if err != nil {
-			metricCount(M_TASK_FAILED)
-			raven.CaptureErrorAndWait(err, nil)
-			logger.Warnf("Error when posting result to server: %s", err.Error())
-			continue
-		}
+		report(&result)
 		metricCount(M_TASK_SUCCESS)
 
 		// reduce time of sleep after success
