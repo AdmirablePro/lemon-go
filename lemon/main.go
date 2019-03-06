@@ -15,9 +15,10 @@ var (
 	serverAddress *string
 
 	// below are build-time variables
-	ravenDSN      string
-	gitRevision   string
-	enableMetrics string
+	ravenDSN           string
+	gitRevision        string
+	enableMetrics      string
+	enableGlobalReport string
 )
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,9 @@ func main() {
 	go consume()
 	if enableMetrics == "true" {
 		go metricsFlusher()
+	}
+	if enableGlobalReport == "true" {
+		go globalReport()
 	}
 
 	http.HandleFunc("/", raven.RecoveryHandler(IndexHandler))
