@@ -7,8 +7,8 @@ import (
 type languageBundle struct {
 	LemonStarting       string
 	MetricsEnabled      string
-	GlobalReportEnabled string
 	MetricsInLog        string
+	GlobalReportEnabled string
 }
 
 var (
