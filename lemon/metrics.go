@@ -21,6 +21,7 @@ var (
 
 // metricsFlusher prints metrics every 30 seconds and clear counts.
 func metricsFlusher() {
+	logger.Info(currentLangBundle.MetricsEnabled)
 	interval := 30
 	time.Sleep(time.Second * time.Duration(interval))
 	for {

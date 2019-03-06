@@ -1,5 +1,5 @@
 package main
 
 func globalReport() {
-	// logger.Info("Global report started to work")
+	logger.Info("Global report is enabled.")
 }
