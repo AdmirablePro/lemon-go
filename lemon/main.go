@@ -44,7 +44,7 @@ func main() {
 	serverAddress = flag.String("server", defaultServer, "Address of server")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 
-	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof(" Lemon (Go %s) 正在启动...", gitRevision)
+	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof("Lemon (Go %s) 正在启动...", gitRevision)
 
 	go fetchTask()
 	go consume()
