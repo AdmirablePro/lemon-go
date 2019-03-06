@@ -13,28 +13,53 @@ import (
 
 // consume gets task from local queue and do the task.
 func consume() {
+	client := &http.Client{}
+
 	for {
 		task := taskQueue.Pop()
 		if task == nil {
+			// if currently no tasks, sleep for 1 second.
+			time.Sleep(time.Second)
 			continue
 		}
 		var (
-			resp *http.Response
-			err  error
+			resp    *http.Response
+			request *http.Request
+			err     error
 		)
-		if task.HTTPMethod == "POST" {
-			// resp, err = http.Post(task.Host + task.Path)
-			// todo: implement post
-		} else if task.HTTPMethod == "GET" {
-			resp, err = http.Get(task.Host + task.Path)
-			// todo: add header, cookie, etc.
-			// todo: 指数等待
-			// todo: 怎么定义成功失败？
-		} else {
+
+		// handle unsupported HTTP Methods
+		if task.HTTPMethod != "POST" && task.HTTPMethod != "GET" {
 			metricCount(M_TASK_FAILED)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")
 			continue
 		}
+
+		// todo: 指数等待
+		// todo: 怎么定义成功失败？
+		request, err = http.NewRequest(task.HTTPMethod, task.Host+task.Path, nil)
+		if err != nil {
+			metricCount(M_TASK_FAILED)
+			raven.CaptureErrorAndWait(err, nil)
+			logger.Warnf("Error when building request: %s", err.Error())
+			continue
+		}
+
+		// add header and cookie
+		for k, v := range task.Header {
+			request.Header.Set(k, v)
+		}
+		request.Header.Set("Cookie", task.Cookie)
+
+		// build query string
+		q := request.URL.Query()
+		for k, v := range task.Param {
+			q.Set(k, v)
+		}
+		request.URL.RawQuery = q.Encode()
+
+		// do request
+		resp, err = client.Do(request)
 		if err != nil {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
@@ -44,10 +69,11 @@ func consume() {
 
 		// read body
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		_ = resp.Body.Close() //must close resp.Body
 		if err != nil {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
-			logger.Warnf("Error when reading body: %s", err.Error())
+			logger.Warnf("Error when reading response body: %s", err.Error())
 			continue
 		}
 
