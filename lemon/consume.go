@@ -40,7 +40,7 @@ func report(result *Result) {
 	}
 
 	// post result to server
-	_, err = http.Post("", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
+	_, err = http.Post(*serverAddress+"/task", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
 	if err != nil {
 		metricCount(M_TASK_FAILED)
 		raven.CaptureErrorAndWait(err, nil)
