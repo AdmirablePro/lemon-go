@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/getsentry/raven-go"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -24,7 +25,8 @@ func fetchTask() {
 			if resp.StatusCode != 200 {
 				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
-				logger.Warnf("Non-200 status code when fetching task: %s", err.Error())
+				respBody, _ := ioutil.ReadAll(resp.Body)
+				logger.Warnf("[%s]Non-200 status code when fetching task: %s", resp.StatusCode, string(respBody))
 				continue
 			}
 

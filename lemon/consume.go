@@ -40,11 +40,18 @@ func report(result *Result) {
 	}
 
 	// post result to server
-	_, err = http.Post(*serverAddress+"/task", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
+	resp, err := http.Post(*serverAddress+"/receipt", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
 	if err != nil {
 		metricCount(M_TASK_FAILED)
 		raven.CaptureErrorAndWait(err, nil)
 		logger.Warnf("Error when posting result to server: %s", err.Error())
+	}
+
+	if resp.StatusCode != 200 {
+		metricCount(M_TASK_FAILED)
+		raven.CaptureErrorAndWait(err, nil)
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		logger.Warnf("[%s]Non-200 status code when submitting task: %s", resp.StatusCode, respBody)
 	}
 }
 

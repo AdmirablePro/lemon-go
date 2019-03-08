@@ -1,23 +1,23 @@
 package main
 
 type Task struct {
-	TaskID     string            `json:"task_id"`
+	TaskID     string            `json:"mid"`
 	HTTPMethod string            `json:"method"`
 	Host       string            `json:"host"`
 	Path       string            `json:"path"`
 	Header     map[string]string `json:"header"`
 	Param      map[string]string `json:"param"`
 	Cookie     string            `json:"cookie"`
-	CookieID   string            `json:"cookie_id"`
-	Payload    string            `json:"payload"`
+	CookieID   string            `json:"cid"`
+	Payload    string            `json:"data"`
 }
 
 type Result struct {
 	Status       string `json:"status"`
-	TaskID       string `json:"task_id"`
-	CookieID     string `json:"cookie_id"`
-	ResponseCode int    `json:"response_code"`
+	TaskID       string `json:"mid"`
+	CookieID     string `json:"cid"`
+	ResponseCode int    `json:"code"`
 	Data         string `json:"data"`
 	FetchedTime  int64  `json:"time"`
-	UserAgent    string `json:"ua"`
+	UserAgent    string `json:"user"`
 }
