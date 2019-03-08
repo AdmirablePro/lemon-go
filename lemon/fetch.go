@@ -13,11 +13,18 @@ func fetchTask() {
 		time.Sleep(time.Second) // sleep 1s
 		if taskQueue.Size() < 10 {
 			// get task
-			resp, err := http.Get(*serverAddress + "/task")
+			resp, err := http.Get(*serverAddress + "/task?num=5")
 			if err != nil {
 				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf("Error when fetching task: %s", err.Error())
+				continue
+			}
+
+			if resp.StatusCode != 200 {
+				metricCount(M_FETCH_FAILED)
+				raven.CaptureErrorAndWait(err, nil)
+				logger.Warnf("Non-200 status code when fetching task: %s", err.Error())
 				continue
 			}
 
