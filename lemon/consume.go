@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/getsentry/raven-go"
+	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -19,13 +20,15 @@ const (
 
 // make a `Result` for error and report to server
 func reportErrorResult(taskID string) {
+	clientUUID := uuid.NewV4()
+
 	result := Result{
 		Status:       taskStatusError,
 		TaskID:       taskID,
 		ResponseCode: 0,
 		Data:         "",
 		FetchedTime:  time.Now().Unix(),
-		UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
+		UserAgent:    fmt.Sprintf("Go client(%s, %s)", gitRevision, clientUUID)}
 
 	report(&result)
 }
