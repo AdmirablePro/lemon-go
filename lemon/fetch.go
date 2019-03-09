@@ -5,6 +5,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -12,9 +13,9 @@ import (
 func fetchTask() {
 	for {
 		time.Sleep(time.Second) // sleep 1s
-		if taskList.Len() < 10 {
+		if taskList.Len() < *maxQueueSize {
 			// get task
-			resp, err := http.Get(*serverAddress + "/task?num=5")
+			resp, err := http.Get(*serverAddress + "/task?num=" + strconv.Itoa(*maxQueueSize-taskList.Len()))
 			if err != nil {
 				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)

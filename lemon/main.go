@@ -4,14 +4,11 @@ import (
 	"container/list"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/getsentry/raven-go"
 	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
-	"net/http"
 	"os"
-	"strconv"
 )
 
 var (
@@ -21,6 +18,7 @@ var (
 
 	// below are command line parameters
 	serverAddress *string
+	maxQueueSize  *int
 
 	// below are build-time variables
 	ravenDSN           string
@@ -30,10 +28,6 @@ var (
 	defaultServer      string
 	lang               string
 )
-
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "hello world")
-}
 
 func init() {
 	// logrus formatter
@@ -88,10 +82,13 @@ func getUserIdentifier() string {
 
 func main() {
 	serverAddress = flag.String("server", defaultServer, "Address of server(must start with scheme)")
-	localPort := flag.Int("local-port", 12345, "Port of local status server")
+	maxQueueSize = flag.Int("queue-size", 10, "Max queue size")
 	flag.Parse()
 
-	logger.WithFields(logrus.Fields{"server": *serverAddress, "user": userIdentifier}).Infof(currentLangBundle.LemonStarting, gitRevision)
+	logger.WithFields(logrus.Fields{
+		"server":    *serverAddress,
+		"user":      userIdentifier,
+		"queueSize": *maxQueueSize}).Infof(currentLangBundle.LemonStarting, gitRevision)
 
 	go fetchTask()
 	go consume()
@@ -102,10 +99,5 @@ func main() {
 		go globalReport()
 	}
 
-	http.HandleFunc("/", raven.RecoveryHandler(IndexHandler))
-	err := http.ListenAndServe("127.0.0.1:"+strconv.Itoa(*localPort), nil)
-	if err != nil {
-		logger.Error(err)
-	}
-
+	select {}
 }
