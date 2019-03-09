@@ -146,6 +146,7 @@ func consume() {
 		}
 
 		// make result
+		clientUUID := uuid.NewV4()
 		result := Result{
 			Status:       taskStatusSuccess,
 			TaskID:       task.TaskID,
@@ -153,7 +154,7 @@ func consume() {
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
 			FetchedTime:  time.Now().Unix(),
-			UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
+			UserAgent:    fmt.Sprintf("Go client(%s, %s)", gitRevision, clientUUID)}
 		report(&result)
 
 		// reduce time of sleep after success
