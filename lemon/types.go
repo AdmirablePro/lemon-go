@@ -22,3 +22,7 @@ type Result struct {
 	FetchedTime  int64  `json:"time"`
 	User         string `json:"user"`
 }
+
+type Configuration struct {
+	ClientID string `json:"uuid"`
+}

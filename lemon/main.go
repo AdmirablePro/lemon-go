@@ -2,17 +2,22 @@ package main
 
 import (
 	"container/list"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/getsentry/raven-go"
+	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 )
 
 var (
-	logger   = logrus.New()
-	taskList *list.List
+	logger         = logrus.New()
+	taskList       *list.List
+	userIdentifier string
 
 	// below are command line parameters
 	serverAddress *string
@@ -46,6 +51,39 @@ func init() {
 
 	// init queue
 	taskList = list.New()
+
+	// user identifier
+	userIdentifier = getUserIdentifier()
+}
+
+// getUserIdentifier reads lemon_seed from current directory, if no file exists, generate one.
+func getUserIdentifier() string {
+	var config Configuration
+	if _, err := os.Stat("./lemon_seed"); os.IsNotExist(err) {
+		// not exist, generate one
+		config.ClientID = uuid.NewV4().String()
+		configBytes, err := json.Marshal(config)
+		if err != nil {
+			logger.Error("Marshal error when generating configBytes: %s", err.Error())
+		}
+
+		err = ioutil.WriteFile("./lemon_seed", configBytes, 0666)
+		if err != nil {
+			logger.Error("Error when write config to seed: %s", err.Error())
+		}
+		return config.ClientID
+	} else {
+		// lemon_config exist
+		body, err := ioutil.ReadFile("./lemon_seed")
+		if err != nil {
+			logger.Fatal("Read exception.")
+		}
+		err = json.Unmarshal(body, &config)
+		if err != nil {
+			logger.Fatalf("Unmarshal error when reading seed: %s", err.Error())
+		}
+		return config.ClientID
+	}
 }
 
 func main() {
@@ -53,7 +91,7 @@ func main() {
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 	flag.Parse()
 
-	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof(currentLangBundle.LemonStarting, gitRevision)
+	logger.WithFields(logrus.Fields{"server": *serverAddress, "user": userIdentifier}).Infof(currentLangBundle.LemonStarting, gitRevision)
 
 	go fetchTask()
 	go consume()

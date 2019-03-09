@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/getsentry/raven-go"
-	"github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
@@ -20,15 +19,13 @@ const (
 
 // make a `Result` for error and report to server
 func reportErrorResult(taskID string) {
-	clientUUID := uuid.NewV4()
-
 	result := Result{
 		Status:       taskStatusError,
 		TaskID:       taskID,
 		ResponseCode: 0,
 		Data:         "",
 		FetchedTime:  time.Now().Unix(),
-		User:         fmt.Sprintf("Go client(%s)", clientUUID)}
+		User:         fmt.Sprintf("Go client(%s)", userIdentifier)}
 
 	report(&result)
 }
@@ -59,7 +56,6 @@ func report(result *Result) {
 		logger.Warnf(currentLangBundle.SubmitResultNon200, resp.StatusCode, respBody)
 	} else {
 		metricCount(M_TASK_SUCCESS)
-		logger.Info("Task execute success")
 	}
 }
 
@@ -146,7 +142,6 @@ func consume() {
 		}
 
 		// make result
-		clientUUID := uuid.NewV4()
 		result := Result{
 			Status:       taskStatusSuccess,
 			TaskID:       task.TaskID,
@@ -154,7 +149,7 @@ func consume() {
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
 			FetchedTime:  time.Now().Unix(),
-			User:         fmt.Sprintf("Go client(%s)", clientUUID)}
+			User:         fmt.Sprintf("Go client(%s)", userIdentifier)}
 		report(&result)
 
 		// reduce time of sleep after success

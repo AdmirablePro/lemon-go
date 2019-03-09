@@ -40,7 +40,7 @@ func fetchTask() {
 				continue
 			}
 
-			logger.Infof(currentLangBundle.FetchTaskCount, len(tasks))
+			logger.Debugf(currentLangBundle.FetchTaskCount, len(tasks))
 
 			// save to queue
 			for _, item := range tasks {
