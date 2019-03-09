@@ -3,6 +3,7 @@ package main
 type Task struct {
 	TaskID     string            `json:"mid"`
 	HTTPMethod string            `json:"method"`
+	Scheme     string            `json:"scheme"`
 	Host       string            `json:"host"`
 	Path       string            `json:"path"`
 	Header     map[string]string `json:"header"`

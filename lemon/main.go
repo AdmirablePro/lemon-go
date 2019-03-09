@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/list"
 	"flag"
 	"fmt"
 	"github.com/getsentry/raven-go"
@@ -10,8 +11,8 @@ import (
 )
 
 var (
-	logger    = logrus.New()
-	taskQueue TaskQueue
+	logger   = logrus.New()
+	taskList *list.List
 
 	// below are command line parameters
 	serverAddress *string
@@ -44,12 +45,11 @@ func init() {
 	}
 
 	// init queue
-	taskQueue = TaskQueue{}
-	taskQueue.New()
+	taskList = list.New()
 }
 
 func main() {
-	serverAddress = flag.String("server", defaultServer, "Address of server")
+	serverAddress = flag.String("server", defaultServer, "Address of server(must start with scheme)")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
 	flag.Parse()
 

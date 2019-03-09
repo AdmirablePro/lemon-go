@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -34,24 +35,27 @@ func report(result *Result) {
 	// marshal
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		metricCount(M_TASK_FAILED)
+		metricCount(M_TASK_SUBMIT_FAILED)
 		raven.CaptureErrorAndWait(err, nil)
 		logger.Warnf("Error when marshaling result: %s", err.Error())
+		return
 	}
 
 	// post result to server
-	resp, err := http.Post(*serverAddress+"/receipt", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
+	resp, err := http.Post(*serverAddress+"/task", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
 	if err != nil {
-		metricCount(M_TASK_FAILED)
+		metricCount(M_TASK_SUBMIT_FAILED)
 		raven.CaptureErrorAndWait(err, nil)
-		logger.Warnf("Error when posting result to server: %s", err.Error())
+		logger.Warnf(currentLangBundle.SubmitResultError, err.Error())
+		return
 	}
 
 	if resp.StatusCode != 200 {
-		metricCount(M_TASK_FAILED)
-		raven.CaptureErrorAndWait(err, nil)
+		metricCount(M_TASK_SUBMIT_FAILED)
 		respBody, _ := ioutil.ReadAll(resp.Body)
-		logger.Warnf("[%s]Non-200 status code when submitting task: %s", resp.StatusCode, respBody)
+		logger.Warnf(currentLangBundle.SubmitResultNon200, resp.StatusCode, respBody)
+	} else {
+		metricCount(M_TASK_SUCCESS)
 	}
 }
 
@@ -64,10 +68,12 @@ func consume() {
 		// sleep between each requests
 		time.Sleep(time.Second * time.Duration(sleepSeconds))
 
-		task := taskQueue.Pop()
-		if task == nil {
+		item := taskList.Front()
+		if item == nil {
 			continue
 		}
+		taskList.Remove(item)
+		task := item.Value.(Task)
 		var (
 			resp    *http.Response
 			request *http.Request
@@ -82,7 +88,14 @@ func consume() {
 			continue
 		}
 
-		request, err = http.NewRequest(task.HTTPMethod, task.Host+task.Path, bytes.NewBuffer([]byte(task.Payload)))
+		if scheme := strings.ToLower(task.Scheme); scheme != "http" && scheme != "https" {
+			metricCount(M_TASK_FAILED)
+			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warnf("Scheme %s not supported. Ignore task.", task.Scheme)
+			reportErrorResult(task.TaskID)
+			continue
+		}
+
+		request, err = http.NewRequest(task.HTTPMethod, task.Scheme+"://"+task.Host+task.Path, bytes.NewBuffer([]byte(task.Payload)))
 		if err != nil {
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
@@ -95,7 +108,9 @@ func consume() {
 		for k, v := range task.Header {
 			request.Header.Set(k, v)
 		}
-		request.Header.Set("Cookie", task.Cookie)
+		if task.Cookie != "" {
+			request.Header.Set("Cookie", task.Cookie)
+		}
 
 		// build query string
 		q := request.URL.Query()
@@ -110,7 +125,7 @@ func consume() {
 			sleepSeconds *= 2 // add time of sleep when request fails
 			metricCount(M_TASK_FAILED)
 			raven.CaptureErrorAndWait(err, nil)
-			logger.Warnf("Error when consuming task: %s", err.Error())
+			logger.Warnf(currentLangBundle.ConsumingHTTPDoError, err.Error())
 			reportErrorResult(task.TaskID)
 			continue
 		}
@@ -135,7 +150,6 @@ func consume() {
 			FetchedTime:  time.Now().Unix(),
 			UserAgent:    fmt.Sprintf("Go client(%s)", gitRevision)}
 		report(&result)
-		metricCount(M_TASK_SUCCESS)
 
 		// reduce time of sleep after success
 		if sleepSeconds > 1 {

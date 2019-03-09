@@ -8,14 +8,15 @@ import (
 )
 
 const (
-	M_FETCH_FAILED  = "taskFetchFailedTimes" // 任务获取失败次数
-	M_TASK_RECEIVED = "taskReceived"         // 获取到的任务个数
-	M_TASK_SUCCESS  = "taskSuccess"          // 成功提交的任务个数
-	M_TASK_FAILED   = "taskFailed"           // 任务失败次数
+	M_FETCH_FAILED       = "taskFetchFailedTimes" // 任务获取失败次数
+	M_TASK_RECEIVED      = "taskReceived"         // 获取到的任务个数
+	M_TASK_SUCCESS       = "taskSuccess"          // 成功提交的任务个数
+	M_TASK_FAILED        = "taskFailed"           // 任务失败次数
+	M_TASK_SUBMIT_FAILED = "taskSubmitFailed"     // 任务提交失败次数
 )
 
 var (
-	metrics      = map[string]int{M_FETCH_FAILED: 0, M_TASK_RECEIVED: 0, M_TASK_SUCCESS: 0, M_TASK_FAILED: 0}
+	metrics      = map[string]int{M_FETCH_FAILED: 0, M_TASK_RECEIVED: 0, M_TASK_SUCCESS: 0, M_TASK_FAILED: 0, M_TASK_SUBMIT_FAILED: 0}
 	metricsMutex = sync.RWMutex{}
 )
 

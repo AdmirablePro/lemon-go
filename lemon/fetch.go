@@ -12,7 +12,7 @@ import (
 func fetchTask() {
 	for {
 		time.Sleep(time.Second) // sleep 1s
-		if taskQueue.Size() < 10 {
+		if taskList.Len() < 10 {
 			// get task
 			resp, err := http.Get(*serverAddress + "/task?num=5")
 			if err != nil {
@@ -40,13 +40,11 @@ func fetchTask() {
 				continue
 			}
 
-			logger.Infof("Received %d tasks from server", len(tasks))
-			logger.Debug(tasks)
+			logger.Infof(currentLangBundle.FetchTaskCount, len(tasks))
 
 			// save to queue
 			for _, item := range tasks {
-				logger.Info("append task queue")
-				taskQueue.Append(item)
+				taskList.PushBack(item)
 				metricCount(M_TASK_RECEIVED)
 			}
 		}
