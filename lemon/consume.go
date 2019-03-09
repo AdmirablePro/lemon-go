@@ -28,7 +28,7 @@ func reportErrorResult(taskID string) {
 		ResponseCode: 0,
 		Data:         "",
 		FetchedTime:  time.Now().Unix(),
-		UserAgent:    fmt.Sprintf("Go client(%s, %s)", gitRevision, clientUUID)}
+		User:         fmt.Sprintf("Go client(%s)", clientUUID)}
 
 	report(&result)
 }
@@ -154,7 +154,7 @@ func consume() {
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
 			FetchedTime:  time.Now().Unix(),
-			UserAgent:    fmt.Sprintf("Go client(%s, %s)", gitRevision, clientUUID)}
+			User:         fmt.Sprintf("Go client(%s)", clientUUID)}
 		report(&result)
 
 		// reduce time of sleep after success

@@ -20,5 +20,5 @@ type Result struct {
 	ResponseCode int    `json:"code"`
 	Data         string `json:"data"`
 	FetchedTime  int64  `json:"time"`
-	UserAgent    string `json:"user"`
+	User         string `json:"user"`
 }
