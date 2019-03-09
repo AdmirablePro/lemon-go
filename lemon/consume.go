@@ -56,6 +56,7 @@ func report(result *Result) {
 		logger.Warnf(currentLangBundle.SubmitResultNon200, resp.StatusCode, respBody)
 	} else {
 		metricCount(M_TASK_SUCCESS)
+		logger.Info("Task execute success")
 	}
 }
 
@@ -145,6 +146,7 @@ func consume() {
 		result := Result{
 			Status:       taskStatusSuccess,
 			TaskID:       task.TaskID,
+			CookieID:     task.CookieID,
 			ResponseCode: resp.StatusCode,
 			Data:         string(bodyBytes),
 			FetchedTime:  time.Now().Unix(),
