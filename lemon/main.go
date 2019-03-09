@@ -10,8 +10,10 @@ import (
 )
 
 var (
-	logger        = logrus.New()
-	taskQueue     = TaskQueue{}
+	logger    = logrus.New()
+	taskQueue TaskQueue
+
+	// below are command line parameters
 	serverAddress *string
 
 	// below are build-time variables
@@ -33,17 +35,23 @@ func init() {
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
 	customFormatter.FullTimestamp = true
 	logger.SetFormatter(customFormatter)
+	logger.SetLevel(logrus.DebugLevel)
 
 	// raven
 	err := raven.SetDSN(ravenDSN)
 	if err != nil {
 		logger.Warnf("Set DSN failed: %s", err.Error())
 	}
+
+	// init queue
+	taskQueue = TaskQueue{}
+	taskQueue.New()
 }
 
 func main() {
 	serverAddress = flag.String("server", defaultServer, "Address of server")
 	localPort := flag.Int("local-port", 12345, "Port of local status server")
+	flag.Parse()
 
 	logger.WithFields(logrus.Fields{"server": *serverAddress}).Infof(currentLangBundle.LemonStarting, gitRevision)
 

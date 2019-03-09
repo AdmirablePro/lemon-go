@@ -66,8 +66,6 @@ func consume() {
 
 		task := taskQueue.Pop()
 		if task == nil {
-			// if currently no tasks, sleep for 1 second.
-			time.Sleep(time.Second)
 			continue
 		}
 		var (

@@ -18,7 +18,7 @@ func fetchTask() {
 			if err != nil {
 				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
-				logger.Warnf("Error when fetching task: %s", err.Error())
+				logger.Warnf(currentLangBundle.FetchingTaskError, err.Error())
 				continue
 			}
 
@@ -26,7 +26,7 @@ func fetchTask() {
 				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
 				respBody, _ := ioutil.ReadAll(resp.Body)
-				logger.Warnf("[%s]Non-200 status code when fetching task: %s", resp.StatusCode, string(respBody))
+				logger.Warnf(currentLangBundle.FetchingTaskNon200, resp.StatusCode, string(respBody))
 				continue
 			}
 
@@ -36,12 +36,16 @@ func fetchTask() {
 			if err != nil {
 				metricCount(M_FETCH_FAILED)
 				raven.CaptureErrorAndWait(err, nil)
-				logger.Warnf("Decode error when fetching task: %s", err.Error())
+				logger.Warnf(currentLangBundle.FetchingTaskDecodeError, err.Error())
 				continue
 			}
 
+			logger.Infof("Received %d tasks from server", len(tasks))
+			logger.Debug(tasks)
+
 			// save to queue
 			for _, item := range tasks {
+				logger.Info("append task queue")
 				taskQueue.Append(item)
 				metricCount(M_TASK_RECEIVED)
 			}
