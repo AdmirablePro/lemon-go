@@ -16,8 +16,9 @@ var (
 	userIdentifier string
 
 	// command line parameters
-	serverAddress *string
-	maxQueueSize  *int
+	serverAddress          *string
+	maxQueueSize           *int
+	metricsIntervalSeconds *int
 
 	// build-time variables
 	ravenDSN           string
@@ -79,6 +80,7 @@ func getUserIdentifier() string {
 func main() {
 	serverAddress = flag.String("server", defaultServer, "Address of server(must start with scheme)")
 	maxQueueSize = flag.Int("queue-size", 10, "Max queue size")
+	metricsIntervalSeconds = flag.Int("metrics-interval", 30, "Metrics interval")
 	flag.Parse()
 
 	logger.WithFields(logrus.Fields{

@@ -28,24 +28,24 @@ func init() {
 	}
 }
 
-// metricsFlusher prints metricMap every 30 seconds and clear counts.
+// metricsFlusher prints metricMap and clear counts every 30 seconds by default.
 func metricsFlusher() {
 	logger.Info(currentLangBundle.MetricsEnabled)
-	interval := 10
-	time.Sleep(time.Second * time.Duration(interval))
+
+	time.Sleep(time.Second * time.Duration(*metricsIntervalSeconds))
 	for {
 		metricsJson, err := json.Marshal(metricMap)
 		if err != nil {
 			logger.Error("JSON marshal error when converting metricMap")
 		}
 
-		logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, interval), string(metricsJson))
+		logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, *metricsIntervalSeconds), string(metricsJson))
 
-		// set value to 0
+		// set values to 0
 		for key := range metricMap {
 			atomic.StoreUint32(metricMap[key], 0)
 		}
-		time.Sleep(time.Second * time.Duration(interval))
+		time.Sleep(time.Second * time.Duration(*metricsIntervalSeconds))
 	}
 }
 
