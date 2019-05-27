@@ -17,14 +17,14 @@ func fetchTask() {
 			// get task
 			resp, err := http.Get(*serverAddress + "/task?num=" + strconv.Itoa(*maxQueueSize-taskList.Len()))
 			if err != nil {
-				metricCount(M_FETCH_FAILED)
+				metricCount(fetchFailed)
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf(currentLangBundle.FetchingTaskError, err.Error())
 				continue
 			}
 
 			if resp.StatusCode != 200 {
-				metricCount(M_FETCH_FAILED)
+				metricCount(fetchFailed)
 				raven.CaptureErrorAndWait(err, nil)
 				respBody, _ := ioutil.ReadAll(resp.Body)
 				logger.Warnf(currentLangBundle.FetchingTaskNon200, resp.StatusCode, string(respBody))
@@ -35,7 +35,7 @@ func fetchTask() {
 			var tasks []Task
 			err = json.NewDecoder(resp.Body).Decode(&tasks)
 			if err != nil {
-				metricCount(M_FETCH_FAILED)
+				metricCount(fetchFailed)
 				raven.CaptureErrorAndWait(err, nil)
 				logger.Warnf(currentLangBundle.FetchingTaskDecodeError, err.Error())
 				continue
@@ -46,7 +46,7 @@ func fetchTask() {
 			// save to queue
 			for _, item := range tasks {
 				taskList.PushBack(item)
-				metricCount(M_TASK_RECEIVED)
+				metricCount(taskReceived)
 			}
 		}
 	}

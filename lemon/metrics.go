@@ -3,22 +3,30 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
 const (
-	M_FETCH_FAILED       = "taskFetchFailedTimes" // 任务获取失败次数
-	M_TASK_RECEIVED      = "taskReceived"         // 获取到的任务个数
-	M_TASK_SUCCESS       = "taskSuccess"          // 成功提交的任务个数
-	M_TASK_FAILED        = "taskFailed"           // 任务失败次数
-	M_TASK_SUBMIT_FAILED = "taskSubmitFailed"     // 任务提交失败次数
+	fetchFailed      = "taskFetchFailedTimes" // 任务获取失败次数
+	taskReceived     = "taskReceived"         // 获取到的任务个数
+	taskSuccess      = "taskSuccess"          // 成功提交的任务个数
+	taskFailed       = "taskFailed"           // 任务失败次数
+	taskSubmitFailed = "taskSubmitFailed"     // 任务提交失败次数
 )
 
 var (
-	metrics      = map[string]int{M_FETCH_FAILED: 0, M_TASK_RECEIVED: 0, M_TASK_SUCCESS: 0, M_TASK_FAILED: 0, M_TASK_SUBMIT_FAILED: 0}
-	metricsMutex = sync.RWMutex{}
+	metrics      = map[string]*uint32{}
+	METRIC_NAMES = [...]string{fetchFailed, taskReceived, taskSuccess, taskFailed, taskSubmitFailed}
 )
+
+func init() {
+	// init count to zero
+	for _, name := range METRIC_NAMES {
+		var zero = uint32(0)
+		metrics[name] = &zero
+	}
+}
 
 // metricsFlusher prints metrics every 30 seconds and clear counts.
 func metricsFlusher() {
@@ -32,18 +40,16 @@ func metricsFlusher() {
 		}
 
 		logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, interval), string(metricsJson))
-		metricsMutex.Lock()
+
+		// set value to 0
 		for key := range metrics {
-			metrics[key] = 0
+			atomic.StoreUint32(metrics[key], 0)
 		}
-		metricsMutex.Unlock()
 		time.Sleep(time.Second * time.Duration(interval))
 	}
 }
 
-// add 1 for the specific metric name
+// metricCount adds 1 for the specific metric name.
 func metricCount(metricName string) {
-	metricsMutex.Lock()
-	metrics[metricName] += 1
-	metricsMutex.Unlock()
+	atomic.AddUint32(metrics[metricName], 1)
 }
