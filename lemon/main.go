@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/list"
 	"encoding/json"
 	"flag"
 	"github.com/getsentry/raven-go"
@@ -12,15 +11,15 @@ import (
 )
 
 var (
-	logger         = logrus.New()
-	taskList       *list.List
+	logger = logrus.New()
+
 	userIdentifier string
 
-	// below are command line parameters
+	// command line parameters
 	serverAddress *string
 	maxQueueSize  *int
 
-	// below are build-time variables
+	// build-time variables
 	ravenDSN           string
 	gitRevision        string
 	enableMetrics      string
@@ -42,9 +41,6 @@ func init() {
 	if err != nil {
 		logger.Warnf("Set DSN failed: %s", err.Error())
 	}
-
-	// init queue
-	taskList = list.New()
 
 	// user identifier
 	userIdentifier = getUserIdentifier()

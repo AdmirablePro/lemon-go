@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	metrics     = map[string]*uint32{}
+	metricMap   = map[string]*uint32{}
 	metricNames = [...]string{fetchFailed, taskReceived, taskSuccess, taskFailed, taskSubmitFailed}
 )
 
@@ -24,26 +24,26 @@ func init() {
 	// init each count to zero
 	for _, name := range metricNames {
 		var zero = uint32(0)
-		metrics[name] = &zero
+		metricMap[name] = &zero
 	}
 }
 
-// metricsFlusher prints metrics every 30 seconds and clear counts.
+// metricsFlusher prints metricMap every 30 seconds and clear counts.
 func metricsFlusher() {
 	logger.Info(currentLangBundle.MetricsEnabled)
 	interval := 10
 	time.Sleep(time.Second * time.Duration(interval))
 	for {
-		metricsJson, err := json.Marshal(metrics)
+		metricsJson, err := json.Marshal(metricMap)
 		if err != nil {
-			logger.Error("JSON marshal error when converting metrics")
+			logger.Error("JSON marshal error when converting metricMap")
 		}
 
 		logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, interval), string(metricsJson))
 
 		// set value to 0
-		for key := range metrics {
-			atomic.StoreUint32(metrics[key], 0)
+		for key := range metricMap {
+			atomic.StoreUint32(metricMap[key], 0)
 		}
 		time.Sleep(time.Second * time.Duration(interval))
 	}
@@ -51,7 +51,7 @@ func metricsFlusher() {
 
 // metricCount adds 1 for the specific metric name.
 func metricCount(metricName string) {
-	atomic.AddUint32(metrics[metricName], 1)
+	atomic.AddUint32(metricMap[metricName], 1)
 }
 
 // globalReport uploads local statistics to central server.
