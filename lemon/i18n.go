@@ -16,6 +16,9 @@ type languageBundle struct {
 	ConsumingHTTPDoError    string
 	SubmitResultNon200      string
 	SubmitResultError       string
+	ExitMetricFlusher       string
+	Exiting                 string
+	Exited                  string
 }
 
 var (
@@ -26,7 +29,7 @@ func init() {
 	// i18n
 	languageSet := make(map[string]languageBundle)
 
-	bundleEN := languageBundle{
+	en := languageBundle{
 		LemonStarting:           "Lemon (Go %s) is starting...",
 		MetricsEnabled:          "Metrics is enabled.",
 		GlobalReportEnabled:     "Global report is enabled.",
@@ -37,10 +40,13 @@ func init() {
 		FetchTaskCount:          "Received %d tasks from server",
 		ConsumingHTTPDoError:    "Error when consuming task: %s",
 		SubmitResultNon200:      "Non-200 status code when submitting task: [%d] %s",
-		SubmitResultError:       "Error when posting result to server: %s"}
-	languageSet[language.English.String()] = bundleEN
+		SubmitResultError:       "Error when posting result to server: %s",
+		ExitMetricFlusher:       "Exit metrics flusher",
+		Exiting:                 "Got exit signal. Stopping all jobs...",
+		Exited:                  "All jobs stopped."}
+	languageSet[language.English.String()] = en
 
-	bundleZH := languageBundle{
+	zh := languageBundle{
 		LemonStarting:           "Lemon (Go %s) 正在启动...",
 		MetricsEnabled:          "指标统计已启用",
 		GlobalReportEnabled:     "全局报告已启用",
@@ -51,8 +57,11 @@ func init() {
 		FetchTaskCount:          "从服务器获取了%d条任务",
 		ConsumingHTTPDoError:    "执行任务时异常: %s",
 		SubmitResultNon200:      "向服务器提交结果时状态码异常: [%d] %s",
-		SubmitResultError:       "向服务器提交结果时异常: %s"}
-	languageSet[language.Chinese.String()] = bundleZH
+		SubmitResultError:       "向服务器提交结果时异常: %s",
+		ExitMetricFlusher:       "指标统计线程已结束",
+		Exiting:                 "接收到终止信号，正在停止所有任务......",
+		Exited:                  "所有任务已停止"}
+	languageSet[language.Chinese.String()] = zh
 
 	clb := languageSet[lang]
 	currentLangBundle = &clb

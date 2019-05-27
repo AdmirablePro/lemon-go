@@ -114,15 +114,14 @@ func main() {
 	signal.Notify(signalChannel, os.Interrupt, os.Kill)
 	<-signalChannel // block until receive quit signal
 	//todo: exit each goroutines
-	logger.Info("Got exit signal.")
+	logger.Info(currentLangBundle.Exiting)
 
 	// notify each goroutine to exit
 	for _, ch := range stopChannels {
 		close(ch)
 	}
-	logger.Info("Stopping all jobs...")
 
 	// wait until all goroutine exit
 	wg.Wait()
-	logger.Info("All jobs stopped.")
+	logger.Info(currentLangBundle.Exited)
 }

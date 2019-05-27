@@ -31,14 +31,14 @@ func init() {
 func metricsFlusher(stopChan <-chan struct{}) {
 	logger.Info(currentLangBundle.MetricsEnabled)
 
-	if lightSleep(*metricsIntervalSeconds, stopChan) {
+	if lightSleep(*metricsIntervalSeconds, stopChan, currentLangBundle.ExitMetricFlusher) {
 		return
 	}
 
 	for {
 		select {
 		case <-stopChan:
-			logger.Info("Exit metrics flusher")
+			logger.Info(currentLangBundle.ExitMetricFlusher)
 			return
 		default:
 			metricsJson, err := json.Marshal(metricMap)
@@ -53,7 +53,7 @@ func metricsFlusher(stopChan <-chan struct{}) {
 				atomic.StoreUint32(metricMap[key], 0)
 			}
 
-			if lightSleep(*metricsIntervalSeconds, stopChan) {
+			if lightSleep(*metricsIntervalSeconds, stopChan, currentLangBundle.ExitMetricFlusher) {
 				return
 			}
 		}
