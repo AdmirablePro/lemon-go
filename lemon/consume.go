@@ -23,12 +23,12 @@ const (
 )
 
 // makeErrorResult makes a Result object for error.
-func makeErrorResult(taskID string, errorCode int) *Result {
+func makeErrorResult(taskID string, errorCode int, httpResponseCode int) *Result {
 	result := Result{
 		Status:       taskStatusError,
 		TaskID:       taskID,
 		FetchedTime:  time.Now().Unix(),
-		ResponseCode: 0,
+		ResponseCode: httpResponseCode,
 		Data:         "",
 		User:         fmt.Sprintf("Go client(%s)", userIdentifier),
 		ErrorCode:    errorCode}
@@ -64,9 +64,9 @@ func report(result *Result) {
 	}
 }
 
-// make a `Result` for error and report to server
-func reportError(taskID string, errorCode int) {
-	result := makeErrorResult(taskID, errorCode)
+// make a `Result` object and report to server
+func reportError(taskID string, errorCode int, httpResponseCode int) {
+	result := makeErrorResult(taskID, errorCode, httpResponseCode)
 	report(result)
 }
 
@@ -90,14 +90,14 @@ func consume(taskChannel <-chan Task) {
 		if task.HTTPMethod != "POST" && task.HTTPMethod != "GET" {
 			MetricAddOne(TaskFailed)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")
-			reportError(task.TaskID, errorCodeUnsupportedMethod)
+			reportError(task.TaskID, errorCodeUnsupportedMethod, 0)
 			continue
 		}
 
 		if scheme := strings.ToLower(task.Scheme); scheme != "http" && scheme != "https" {
 			MetricAddOne(TaskFailed)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warnf("Scheme %s not supported. Ignore task.", task.Scheme)
-			reportError(task.TaskID, errorCodeUnsupportedScheme)
+			reportError(task.TaskID, errorCodeUnsupportedScheme, 0)
 			continue
 		}
 
@@ -106,7 +106,7 @@ func consume(taskChannel <-chan Task) {
 			MetricAddOne(TaskFailed)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when building request: %s", err.Error())
-			reportError(task.TaskID, errorCodeFailBuildingRequest)
+			reportError(task.TaskID, errorCodeFailBuildingRequest, 0)
 			continue
 		}
 
@@ -132,7 +132,7 @@ func consume(taskChannel <-chan Task) {
 			MetricAddOne(TaskFailed)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf(currentLangBundle.ConsumingHTTPDoError, err.Error())
-			reportError(task.TaskID, errorCodeRequestFailed)
+			reportError(task.TaskID, errorCodeRequestFailed, 0)
 			continue
 		}
 
@@ -143,7 +143,7 @@ func consume(taskChannel <-chan Task) {
 			MetricAddOne(TaskFailed)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when reading response body: %s", err.Error())
-			reportError(task.TaskID, errorCodeReadBodyFailed)
+			reportError(task.TaskID, errorCodeReadBodyFailed, resp.StatusCode)
 			continue
 		}
 
