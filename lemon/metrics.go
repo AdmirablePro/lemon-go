@@ -16,13 +16,13 @@ const (
 )
 
 var (
-	metrics      = map[string]*uint32{}
-	METRIC_NAMES = [...]string{fetchFailed, taskReceived, taskSuccess, taskFailed, taskSubmitFailed}
+	metrics     = map[string]*uint32{}
+	metricNames = [...]string{fetchFailed, taskReceived, taskSuccess, taskFailed, taskSubmitFailed}
 )
 
 func init() {
-	// init count to zero
-	for _, name := range METRIC_NAMES {
+	// init each count to zero
+	for _, name := range metricNames {
 		var zero = uint32(0)
 		metrics[name] = &zero
 	}
@@ -52,4 +52,16 @@ func metricsFlusher() {
 // metricCount adds 1 for the specific metric name.
 func metricCount(metricName string) {
 	atomic.AddUint32(metrics[metricName], 1)
+}
+
+// globalReport uploads local statistics to central server.
+// TODO: implement this
+func globalReport() {
+	logger.Info(currentLangBundle.GlobalReportEnabled)
+
+	// get status from server
+
+	// json unmarshal
+
+	// print in log
 }
