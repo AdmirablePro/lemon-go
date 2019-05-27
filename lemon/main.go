@@ -90,8 +90,10 @@ func main() {
 		"user":      userIdentifier,
 		"queueSize": *maxQueueSize}).Infof(currentLangBundle.LemonStarting, gitRevision)
 
-	go fetchTask()
-	go consume()
+	taskChannel := make(chan Task)
+	go fetchTask(taskChannel)
+	go consume(taskChannel)
+
 	if enableMetrics == "true" {
 		go metricsFlusher()
 	}

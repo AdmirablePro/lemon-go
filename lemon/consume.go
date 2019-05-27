@@ -60,7 +60,7 @@ func report(result *Result) {
 }
 
 // consume gets task from local queue and do the task.
-func consume() {
+func consume(taskChannel <-chan Task) {
 	client := &http.Client{}
 	sleepSeconds := 1
 
@@ -68,12 +68,7 @@ func consume() {
 		// sleep between each requests
 		time.Sleep(time.Second * time.Duration(sleepSeconds))
 
-		item := taskList.Front()
-		if item == nil {
-			continue
-		}
-		taskList.Remove(item)
-		task := item.Value.(Task)
+		task := <-taskChannel
 		var (
 			resp    *http.Response
 			request *http.Request

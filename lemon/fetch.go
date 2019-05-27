@@ -10,7 +10,7 @@ import (
 )
 
 // fetchTask fetches a task list from server if local size is smaller than 10 then append to local task queue.
-func fetchTask() {
+func fetchTask(taskChannel chan<- Task) {
 	for {
 		time.Sleep(time.Second) // sleep 1s
 		if taskList.Len() < *maxQueueSize {
@@ -45,7 +45,7 @@ func fetchTask() {
 
 			// save to queue
 			for _, item := range tasks {
-				taskList.PushBack(item)
+				taskChannel <- item
 				metricCount(taskReceived)
 			}
 		}
