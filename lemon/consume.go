@@ -13,21 +13,26 @@ import (
 )
 
 const (
-	taskStatusError   = "error"
-	taskStatusSuccess = "success"
+	taskStatusError              = "error"
+	taskStatusSuccess            = "success"
+	errorCodeUnsupportedMethod   = 4001
+	errorCodeUnsupportedScheme   = 4002
+	errorCodeFailBuildingRequest = 4003
+	errorCodeRequestFailed       = 5001
+	errorCodeReadBodyFailed      = 5002
 )
 
-// make a `Result` for error and report to server
-func reportErrorResult(taskID string) {
+// makeErrorResult makes a Result object for error.
+func makeErrorResult(taskID string, errorCode int) *Result {
 	result := Result{
 		Status:       taskStatusError,
 		TaskID:       taskID,
+		FetchedTime:  time.Now().Unix(),
 		ResponseCode: 0,
 		Data:         "",
-		FetchedTime:  time.Now().Unix(),
-		User:         fmt.Sprintf("Go client(%s)", userIdentifier)}
-
-	report(&result)
+		User:         fmt.Sprintf("Go client(%s)", userIdentifier),
+		ErrorCode:    errorCode}
+	return &result
 }
 
 // post a `Result` to lemon server
@@ -35,7 +40,7 @@ func report(result *Result) {
 	// marshal
 	resultBytes, err := json.Marshal(result)
 	if err != nil {
-		metricCount(taskSubmitFailed)
+		MetricAddOne(TaskSubmitFailed)
 		raven.CaptureErrorAndWait(err, nil)
 		logger.Warnf("Error when marshaling result: %s", err.Error())
 		return
@@ -44,19 +49,25 @@ func report(result *Result) {
 	// post result to server
 	resp, err := http.Post(*serverAddress+"/task", "application/json;charset=utf-8", bytes.NewBuffer(resultBytes))
 	if err != nil {
-		metricCount(taskSubmitFailed)
+		MetricAddOne(TaskSubmitFailed)
 		raven.CaptureErrorAndWait(err, nil)
 		logger.Warnf(currentLangBundle.SubmitResultError, err.Error())
 		return
 	}
 
 	if resp.StatusCode != 200 {
-		metricCount(taskSubmitFailed)
+		MetricAddOne(TaskSubmitFailed)
 		respBody, _ := ioutil.ReadAll(resp.Body)
 		logger.Warnf(currentLangBundle.SubmitResultNon200, resp.StatusCode, respBody)
 	} else {
-		metricCount(taskSuccess)
+		MetricAddOne(TaskSuccess)
 	}
+}
+
+// make a `Result` for error and report to server
+func reportError(taskID string, errorCode int) {
+	result := makeErrorResult(taskID, errorCode)
+	report(result)
 }
 
 // consume gets task from local queue and do the task.
@@ -77,25 +88,25 @@ func consume(taskChannel <-chan Task) {
 
 		// handle unsupported HTTP Methods
 		if task.HTTPMethod != "POST" && task.HTTPMethod != "GET" {
-			metricCount(taskFailed)
+			MetricAddOne(TaskFailed)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warn("HTTP method not supported. Ignore task.")
-			reportErrorResult(task.TaskID)
+			reportError(task.TaskID, errorCodeUnsupportedMethod)
 			continue
 		}
 
 		if scheme := strings.ToLower(task.Scheme); scheme != "http" && scheme != "https" {
-			metricCount(taskFailed)
+			MetricAddOne(TaskFailed)
 			logger.WithFields(logrus.Fields{"taskID": task.TaskID}).Warnf("Scheme %s not supported. Ignore task.", task.Scheme)
-			reportErrorResult(task.TaskID)
+			reportError(task.TaskID, errorCodeUnsupportedScheme)
 			continue
 		}
 
 		request, err = http.NewRequest(task.HTTPMethod, task.Scheme+"://"+task.Host+task.Path, bytes.NewBuffer([]byte(task.Payload)))
 		if err != nil {
-			metricCount(taskFailed)
+			MetricAddOne(TaskFailed)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when building request: %s", err.Error())
-			reportErrorResult(task.TaskID)
+			reportError(task.TaskID, errorCodeFailBuildingRequest)
 			continue
 		}
 
@@ -118,10 +129,10 @@ func consume(taskChannel <-chan Task) {
 		resp, err = client.Do(request)
 		if err != nil {
 			sleepSeconds *= 2 // add time of sleep when request fails
-			metricCount(taskFailed)
+			MetricAddOne(TaskFailed)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf(currentLangBundle.ConsumingHTTPDoError, err.Error())
-			reportErrorResult(task.TaskID)
+			reportError(task.TaskID, errorCodeRequestFailed)
 			continue
 		}
 
@@ -129,10 +140,10 @@ func consume(taskChannel <-chan Task) {
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		_ = resp.Body.Close() //must close resp.Body
 		if err != nil {
-			metricCount(taskFailed)
+			MetricAddOne(TaskFailed)
 			raven.CaptureErrorAndWait(err, nil)
 			logger.Warnf("Error when reading response body: %s", err.Error())
-			reportErrorResult(task.TaskID)
+			reportError(task.TaskID, errorCodeReadBodyFailed)
 			continue
 		}
 

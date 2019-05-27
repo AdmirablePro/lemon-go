@@ -14,13 +14,14 @@ type Task struct {
 }
 
 type Result struct {
-	Status       string `json:"status"`
-	TaskID       string `json:"mid"`
-	CookieID     string `json:"cid"`
-	ResponseCode int    `json:"code"`
-	Data         string `json:"data"`
-	FetchedTime  int64  `json:"time"`
-	User         string `json:"user"`
+	Status       string `json:"status"`    // task status
+	TaskID       string `json:"mid"`       // task id
+	FetchedTime  int64  `json:"time"`      // fetch time
+	CookieID     string `json:"cid"`       // cookie id
+	ResponseCode int    `json:"code"`      // HTTP response code
+	Data         string `json:"data"`      // HTTP response body
+	User         string `json:"user"`      // User identifier
+	ErrorCode    int    `json:"errorCode"` // error code
 }
 
 type Configuration struct {

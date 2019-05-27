@@ -8,16 +8,16 @@ import (
 )
 
 const (
-	fetchFailed      = "taskFetchFailedTimes" // 任务获取失败次数
-	taskReceived     = "taskReceived"         // 获取到的任务个数
-	taskSuccess      = "taskSuccess"          // 成功提交的任务个数
-	taskFailed       = "taskFailed"           // 任务失败次数
-	taskSubmitFailed = "taskSubmitFailed"     // 任务提交失败次数
+	FetchFailed      = "taskFetchFailedTimes" // 任务获取失败次数
+	TaskReceived     = "taskReceived"         // 获取到的任务个数
+	TaskSuccess      = "taskSuccess"          // 成功提交的任务个数
+	TaskFailed       = "taskFailed"           // 任务失败次数
+	TaskSubmitFailed = "taskSubmitFailed"     // 任务提交失败次数
 )
 
 var (
 	metricMap   = map[string]*uint32{}
-	metricNames = [...]string{fetchFailed, taskReceived, taskSuccess, taskFailed, taskSubmitFailed}
+	metricNames = [...]string{FetchFailed, TaskReceived, TaskSuccess, TaskFailed, TaskSubmitFailed}
 )
 
 func init() {
@@ -49,8 +49,8 @@ func metricsFlusher() {
 	}
 }
 
-// metricCount adds 1 for the specific metric name.
-func metricCount(metricName string) {
+// MetricAddOne adds 1 for the specific metric name.
+func MetricAddOne(metricName string) {
 	atomic.AddUint32(metricMap[metricName], 1)
 }
 
