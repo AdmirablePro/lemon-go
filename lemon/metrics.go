@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync/atomic"
-	"time"
 )
 
 const (
@@ -29,23 +28,35 @@ func init() {
 }
 
 // metricsFlusher prints metricMap and clear counts every 30 seconds by default.
-func metricsFlusher() {
+func metricsFlusher(stopChan <-chan struct{}) {
 	logger.Info(currentLangBundle.MetricsEnabled)
 
-	time.Sleep(time.Second * time.Duration(*metricsIntervalSeconds))
+	if lightSleep(*metricsIntervalSeconds, stopChan) {
+		return
+	}
+
 	for {
-		metricsJson, err := json.Marshal(metricMap)
-		if err != nil {
-			logger.Error("JSON marshal error when converting metricMap")
-		}
+		select {
+		case <-stopChan:
+			logger.Info("Exit metrics flusher")
+			return
+		default:
+			metricsJson, err := json.Marshal(metricMap)
+			if err != nil {
+				logger.Error("JSON marshal error when converting metricMap")
+			}
 
-		logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, *metricsIntervalSeconds), string(metricsJson))
+			logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, *metricsIntervalSeconds), string(metricsJson))
 
-		// set values to 0
-		for key := range metricMap {
-			atomic.StoreUint32(metricMap[key], 0)
+			// set values to 0
+			for key := range metricMap {
+				atomic.StoreUint32(metricMap[key], 0)
+			}
+
+			if lightSleep(*metricsIntervalSeconds, stopChan) {
+				return
+			}
 		}
-		time.Sleep(time.Second * time.Duration(*metricsIntervalSeconds))
 	}
 }
 

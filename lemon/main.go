@@ -8,6 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
+	"os/signal"
+	"sync"
 )
 
 var (
@@ -78,6 +80,9 @@ func getUserIdentifier() string {
 }
 
 func main() {
+	var stopChannels []chan struct{}
+	var wg sync.WaitGroup
+
 	serverAddress = flag.String("server", defaultServer, "Address of server(must start with scheme)")
 	maxQueueSize = flag.Int("queue-size", 10, "Max queue size")
 	metricsIntervalSeconds = flag.Int("metrics-interval", 30, "Metrics interval")
@@ -93,11 +98,31 @@ func main() {
 	go consume(taskChannel)
 
 	if enableMetrics == "true" {
-		go metricsFlusher()
+		stopChan := make(chan struct{})
+		stopChannels = append(stopChannels, stopChan)
+		go func(stop <-chan struct{}) {
+			defer wg.Done()
+			wg.Add(1)
+			metricsFlusher(stop)
+		}(stopChan)
 	}
 	if enableGlobalReport == "true" {
 		go globalReport()
 	}
 
-	select {}
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, os.Kill)
+	<-signalChannel // block until receive quit signal
+	//todo: exit each goroutines
+	logger.Info("Got exit signal.")
+
+	// notify each goroutine to exit
+	for _, ch := range stopChannels {
+		close(ch)
+	}
+	logger.Info("Stopping all jobs...")
+
+	// wait until all goroutine exit
+	wg.Wait()
+	logger.Info("All jobs stopped.")
 }
