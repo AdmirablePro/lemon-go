@@ -65,7 +65,7 @@ func MetricAddOne(metricName string) {
 	atomic.AddUint32(metricMap[metricName], 1)
 }
 
-// globalReport uploads local statistics to central server.
+// globalReport gets global status of current project from server and print it to console.
 // TODO: implement this
 func globalReport() {
 	logger.Info(currentLangBundle.GlobalReportEnabled)

@@ -94,7 +94,15 @@ func main() {
 		"queueSize": *maxQueueSize}).Infof(currentLangBundle.LemonStarting, gitRevision)
 
 	taskChannel := make(chan Task)
-	go fetchTask(taskChannel)
+
+	stopChan := make(chan struct{})
+	stopChannels = append(stopChannels, stopChan)
+	go func(stop <-chan struct{}) {
+		defer wg.Done()
+		wg.Add(1)
+		fetchTask(taskChannel, stop)
+	}(stopChan)
+
 	go consume(taskChannel)
 
 	if enableMetrics == "true" {
