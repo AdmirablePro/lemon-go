@@ -46,7 +46,7 @@ func metricsFlusher(stopChan <-chan struct{}) {
 				logger.Error("JSON marshal error when converting metricMap")
 			}
 
-			logger.Info(fmt.Sprintf(currentLangBundle.MetricsInLog, *metricsIntervalSeconds), string(metricsJson))
+			logger.Info(fmt.Sprintf(currentLangBundle.MetricsLogPrefix, *metricsIntervalSeconds), string(metricsJson))
 
 			// set values to 0
 			for key := range metricMap {

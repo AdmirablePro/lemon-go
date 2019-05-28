@@ -91,7 +91,7 @@ func main() {
 	logger.WithFields(logrus.Fields{
 		"server":    *serverAddress,
 		"user":      userIdentifier,
-		"queueSize": *maxQueueSize}).Infof(currentLangBundle.LemonStarting, gitRevision)
+		"queueSize": *maxQueueSize}).Infof(currentLangBundle.Starting, gitRevision)
 
 	taskChannel := make(chan Task)
 

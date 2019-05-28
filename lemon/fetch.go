@@ -46,7 +46,7 @@ func fetchTask(taskChannel chan<- Task, stopChannel <-chan struct{}) {
 				continue
 			}
 
-			logger.Debugf(currentLangBundle.FetchTaskCount, len(tasks))
+			logger.Debugf(currentLangBundle.FetchingSuccess, len(tasks))
 
 			// save to queue
 			for _, item := range tasks {
