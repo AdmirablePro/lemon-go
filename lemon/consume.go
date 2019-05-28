@@ -76,15 +76,16 @@ func consume(taskChannel <-chan Task, stopChannel <-chan struct{}) {
 	sleepSeconds := 1
 
 	for {
-		// sleep between each requests
-		lightSleep(sleepSeconds, stopChannel, currentLangBundle.ExitConsumer)
-
 		select {
 		case <-stopChannel:
 			logger.Info(currentLangBundle.ExitConsumer)
 			return
-		default:
-			task := <-taskChannel
+		case task := <-taskChannel:
+			// sleep between each requests
+			if lightSleep(sleepSeconds, stopChannel, currentLangBundle.ExitConsumer) {
+				return
+			}
+
 			var (
 				resp    *http.Response
 				request *http.Request
