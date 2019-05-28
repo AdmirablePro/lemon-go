@@ -113,6 +113,7 @@ func main() {
 		consume(taskChannel, stop)
 	}(stopChan)
 
+	// metrics goroutine
 	if enableMetrics == "true" {
 		stopChan := make(chan struct{})
 		stopChannels = append(stopChannels, stopChan)
@@ -122,10 +123,13 @@ func main() {
 			metricsFlusher(stop)
 		}(stopChan)
 	}
+
+	// global report goroutine
 	if enableGlobalReport == "true" {
 		go globalReport()
 	}
 
+	// handle signal
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, os.Kill)
 	<-signalChannel // block until receive quit signal
