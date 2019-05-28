@@ -80,7 +80,7 @@ func getUserIdentifier() string {
 }
 
 func main() {
-	var stopChannels []chan struct{}
+	var stopChannel = make(chan struct{})
 	var wg sync.WaitGroup
 
 	serverAddress = flag.String("server", defaultServer, "Address of server(must start with scheme)")
@@ -96,32 +96,26 @@ func main() {
 	taskChannel := make(chan Task)
 
 	// task fetching goroutine
-	stopChan := make(chan struct{})
-	stopChannels = append(stopChannels, stopChan)
 	go func(stop <-chan struct{}) {
 		defer wg.Done()
 		wg.Add(1)
 		fetchTask(taskChannel, stop)
-	}(stopChan)
+	}(stopChannel)
 
 	// task consuming goroutine
-	stopChan = make(chan struct{})
-	stopChannels = append(stopChannels, stopChan)
 	go func(stop <-chan struct{}) {
 		defer wg.Done()
 		wg.Add(1)
 		consume(taskChannel, stop)
-	}(stopChan)
+	}(stopChannel)
 
 	// metrics goroutine
 	if enableMetrics == "true" {
-		stopChan := make(chan struct{})
-		stopChannels = append(stopChannels, stopChan)
 		go func(stop <-chan struct{}) {
 			defer wg.Done()
 			wg.Add(1)
 			metricsFlusher(stop)
-		}(stopChan)
+		}(stopChannel)
 	}
 
 	// global report goroutine
@@ -137,9 +131,7 @@ func main() {
 	logger.Info(currentLangBundle.Exiting)
 
 	// notify each goroutine to exit
-	for _, ch := range stopChannels {
-		close(ch)
-	}
+	close(stopChannel)
 
 	// wait until all goroutine exit
 	wg.Wait()
