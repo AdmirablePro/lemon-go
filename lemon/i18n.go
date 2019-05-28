@@ -19,7 +19,8 @@ type languageBundle struct {
 	ExitMetricFlusher       string
 	Exiting                 string
 	Exited                  string
-	ExitFetchThread         string
+	ExitFetcher             string
+	ExitConsumer            string
 }
 
 var (
@@ -43,9 +44,10 @@ func init() {
 		SubmitResultNon200:      "Non-200 status code when submitting task: [%d] %s",
 		SubmitResultError:       "Error when posting result to server: %s",
 		ExitMetricFlusher:       "Exit metrics flusher",
-		Exiting:                 "Got exit signal. Stopping all jobs...",
-		Exited:                  "All jobs stopped.",
-		ExitFetchThread:         "Exit task fetcher."}
+		Exiting:                 "Got exit signal. Stopping all services...",
+		Exited:                  "All services stopped.",
+		ExitFetcher:             "Exit task fetcher.",
+		ExitConsumer:            "Exit consumer."}
 	languageSet[language.English.String()] = en
 
 	zh := languageBundle{
@@ -62,8 +64,9 @@ func init() {
 		SubmitResultError:       "向服务器提交结果时异常: %s",
 		ExitMetricFlusher:       "指标统计线程已结束",
 		Exiting:                 "接收到终止信号，正在停止所有任务......",
-		Exited:                  "所有任务已停止",
-		ExitFetchThread:         "任务获取进程已结束"}
+		Exited:                  "所有服务已停止",
+		ExitFetcher:             "任务获取线程已结束",
+		ExitConsumer:            "任务消费线程已结束"}
 	languageSet[language.Chinese.String()] = zh
 
 	clb := languageSet[lang]

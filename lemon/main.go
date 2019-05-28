@@ -95,6 +95,7 @@ func main() {
 
 	taskChannel := make(chan Task)
 
+	// task fetching goroutine
 	stopChan := make(chan struct{})
 	stopChannels = append(stopChannels, stopChan)
 	go func(stop <-chan struct{}) {
@@ -103,7 +104,14 @@ func main() {
 		fetchTask(taskChannel, stop)
 	}(stopChan)
 
-	go consume(taskChannel)
+	// task consuming goroutine
+	stopChan = make(chan struct{})
+	stopChannels = append(stopChannels, stopChan)
+	go func(stop <-chan struct{}) {
+		defer wg.Done()
+		wg.Add(1)
+		consume(taskChannel, stop)
+	}(stopChan)
 
 	if enableMetrics == "true" {
 		stopChan := make(chan struct{})
@@ -121,7 +129,7 @@ func main() {
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, os.Kill)
 	<-signalChannel // block until receive quit signal
-	//todo: exit each goroutines
+
 	logger.Info(currentLangBundle.Exiting)
 
 	// notify each goroutine to exit

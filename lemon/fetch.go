@@ -10,11 +10,11 @@ import (
 )
 
 // fetchTask fetches a task list from server if local size is smaller than 10 then append to local task queue.
-func fetchTask(taskChannel chan<- Task, stopChan <-chan struct{}) {
+func fetchTask(taskChannel chan<- Task, stopChannel <-chan struct{}) {
 	for {
 		select {
-		case <-stopChan:
-			logger.Info(currentLangBundle.ExitFetchThread)
+		case <-stopChannel:
+			logger.Info(currentLangBundle.ExitFetcher)
 			return
 		default:
 			time.Sleep(time.Second) // sleep 1s
